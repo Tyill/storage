@@ -35,16 +35,16 @@
 
 namespace SN_API{
       
-    ///// version library
-    ///// @return version
-    //std::string versionLib(){
+   /* /// version library
+    /// @return version
+    std::string versionLib(){
 
-    //    char ver[32];
-    //    snVersionLib(ver);
+        char ver[32];
+        snVersionLib(ver);
 
-    //    return ver;
-    //}
-   
+        return ver;
+    }
+   */
     class Net{
                
     public:

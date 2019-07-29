@@ -29,7 +29,6 @@
 #include <cstring>
 #include <string>
 #include <vector>
-#include "skyNet.h"
 
 namespace SN_API{
       

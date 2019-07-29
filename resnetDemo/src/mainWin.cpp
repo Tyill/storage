@@ -34,7 +34,6 @@ void MainWin::statusMess(const std::string& mess){
   
     ui.txtStatusMess->SetCaretPosition(-1);
     ui.txtStatusMess->WriteText(CurrTimeMs() + " " + mess + "\n");
-   
 }
 
 void MainWin::createTools(){
@@ -115,21 +114,24 @@ void MainWin::connects(){
             recStop_ = true;
             pthrRec_->join();
         }
-        evt.Skip();
+
+        exit(0);
+
     }, wxID_ANY);
 
     ui.plot->Bind(wxEVT_PAINT, &MainWin::onPaint, this);
     ui.plot->Bind(wxEVT_ERASE_BACKGROUND, [this](wxEraseEvent&){}, wxID_ANY);
     ui.plot->Bind(wxEVT_SIZE, [this](wxSizeEvent&){
-
+               
         int cwidth = ui.plot->GetSize().GetWidth(),
             cheight = ui.plot->GetSize().GetHeight();
-              
+        
+        std::lock_guard<std::mutex> lck(mtx_);
 
         ui.plot->Refresh();
     }, wxID_ANY);
     ui.plot->Bind(wxEVT_LEFT_DOWN, [this](wxMouseEvent& evt){
-     
+                
         auto cp = evt.GetPosition();
 
         isLeftTop_ = (abs(cp.x - selRect_.GetLeftTop().x) < 10) && (abs(cp.y - selRect_.GetLeftTop().y) < 10);
@@ -141,9 +143,7 @@ void MainWin::connects(){
 
     }, wxID_ANY);
     ui.plot->Bind(wxEVT_LEFT_UP, [this](wxMouseEvent& evt){
-
-        auto cp = evt.GetPosition();
-
+                
         isLeftTop_ = false;
         isLeftBottom_ = false;
         isRightTop_ = false;
@@ -154,9 +154,7 @@ void MainWin::connects(){
     ui.plot->Bind(wxEVT_MOTION, [this](wxMouseEvent& evt){
 
         if (evt.LeftIsDown() && evt.Dragging()) {
-
-            mtx_.lock();
-
+                    
             auto cp = evt.GetPosition();
                        
             if (isLeftTop_){
@@ -203,9 +201,9 @@ void MainWin::connects(){
                 selRect_.SetRightBottom(wxPoint(x, y));
             }
 
-            mtx_.unlock();
-           
-            Refresh();
+            std::lock_guard<std::mutex> lck(mtx_);
+                       
+            ui.plot->Refresh();
         }   
 
     }, wxID_ANY);
@@ -313,14 +311,13 @@ void MainWin::recImage(){
 
     while (!recStop_){
     
+        
         double scaleW = ui.plot->GetSize().GetWidth() / double(cimg_.GetWidth()),
                scaleH = ui.plot->GetSize().GetHeight() / double(cimg_.GetHeight());
-
-        mtx_.lock();
+               
         wxRect rct(selRect_.x / scaleW, selRect_.y / scaleH, selRect_.width / scaleW, selRect_.height / scaleH);
-              
+
         auto img = cimg_.GetSubImage(rct).Copy();
-        mtx_.unlock();
        
         if (!img.IsOk()) continue;
 
@@ -348,6 +345,8 @@ void MainWin::recImage(){
 
         if (cname_ != objNames[maxInx]){
             cname_ = objNames[maxInx];
+
+            std::lock_guard<std::mutex> lck(mtx_);
 
             ui.plot->Refresh();
         }
