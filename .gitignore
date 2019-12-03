@@ -1,1 +1,4 @@
 resnetDemo/x64*
+
+# The directory Mix will write compiled artifacts to.
+first_app/_build/
